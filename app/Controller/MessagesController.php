@@ -5,24 +5,36 @@
         public $uses = array('Message','User','UserDetail');
 
         public function send() {
+            //retrieve all users except auth id
             $users = $this->UserDetail->find('list', [
                 'fields' => ['id','name'],
                 'conditions' => [
                     'id !=' => $this->Auth->user('User.id')
                 ]
             ]);
+            //pass users to view
             $this->set('users', $users); 
-            if ($this->request->is('post')) {
+            //check ajax request
+            if ($this->request->is('ajax')) {
                 $postData = $this->request->data;
+                //check if postData is empty
+                if (isset($this->request->data['Message']['to_user_id']) && !$this->request->data['Message']['to_user_id'] || !isset($this->request->data['Message']['to_user_id']) || !$this->request->data['Message']['content']) {
+                    $this->response->body(json_encode(['error' => 'all fields is required']));
+                    $this->response->type('json');
+                    return $this->response;
+                }
                 $this->request->data['Message']['from_user_id'] = $this->Auth->user('User.id');
                 $this->Message->set($this->request->data);
+                //save message
                 if ($this->Message->save($postData)) {
-                    $this->Flash->success('Message sent successfully.',);
-                    return $this->redirect(array('action' => 'index')); 
+                    $this->response->body(json_encode(['success' => 'Message sent successfully']));
                 } else {
-                    $this->Session->setFlash('Error sending message.');
+                    $this->response->body(json_encode(['error' => 'Error sending message.']));
                 }
+                $this->response->type('json');
+                return $this->response;
             }
+            
         
         }
 
@@ -34,13 +46,25 @@
             App::uses('CakeText', 'Utility');
 
             $this->layout = false;
-
-            if($this->request->is('ajax')) { 
+            //check ajax request
+            if($this->request->is('ajax')) {    
+                /**
+                 * Initialize 
+                 * Page
+                 * keyword
+                 * limit
+                 * offset
+                 * message 
+                 * totalMessages
+                 */
                 $page = isset($this->request->query['page']) ? $this->request->query['page'] : 1;
                 $keyword = isset($this->request->query['keywords']) ? $this->request->query['keywords'] : "";
                 $limit = isset($this->request->query['limit']) ? $this->request->query['limit'] : 10;
                 $offset = ($page - 1) * $limit;
+                $messages = [];
+                $totalMessages = 0;
 
+                //retrieve the latest message
                 $latestMessages = $this->Message->find('all', array(
                     'fields' => array('MAX(Message.id) AS max_id', 'Message.from_user_id', 'Message.to_user_id', 'Message.content'),
                     'conditions' => array(
@@ -48,35 +72,35 @@
                             array('Message.from_user_id' => $this->Auth->user('User.id')),
                             array('Message.to_user_id' => $this->Auth->user('User.id')),
                         ),
-                        array('Message.status' => 1)
+                        array('Message.status' => 1) // 0 indicates deleted
                     ),
                     'group' => array('LEAST(Message.from_user_id, Message.to_user_id)', 'GREATEST(Message.from_user_id, Message.to_user_id)')
                 ));
-                
-                $messages = [];
-                $totalMessages = 0;
+                //check latest messages
                 if ($latestMessages) {
+                    //
                     $messages = $this->Message->find('all', array(
                         'conditions' => array(
-                            'Message.id IN' => Hash::extract($latestMessages, '{n}.0.max_id'),
+                            'Message.id IN' => Hash::extract($latestMessages, '{n}.0.max_id'), //extract id from latestmessages array
                             'OR' => array(
-                                'Sender.name LIKE' => "%$keyword%",
+                                'Sender.name LIKE' => "%$keyword%", 
                                 'Recipient.name LIKE' => "%$keyword%",
                             )
                         ),
                         'limit' => $limit,
                         'offset' => $offset,
                         'order' => array('Message.id DESC'),
-                    ));
+                    )); 
+                    //count all messages
                     $totalMessages = $this->Message->find('count', array(
                         'conditions' => array(
-                            'Message.id IN' => Hash::extract($latestMessages, '{n}.0.max_id'),
+                            'Message.id IN' => Hash::extract($latestMessages, '{n}.0.max_id'), //extract id from latestmessages array
                             'Sender.name LIKE' => "%$keyword%",
                         ),
                         'order' => array('Message.id DESC'),
                     ));
                 }
-
+                //compute total pages
                 $totalPages = ceil($totalMessages / $limit);
 
                 //OUTPUT IN VIEW
@@ -151,8 +175,8 @@
                 'conditions' => array('UserDetail.user_id' => $id),
                 'fields' => array('UserDetail.name')
             ));
-
-            if ($this->request->is('post')) {
+            //check ajax request
+            if ($this->request->is('ajax')) {
                 $this->request->data['Message']['from_user_id'] = $this->Auth->user('User.id');
                 $this->request->data['Message']['to_user_id'] = $id;
                 $this->Message->set($this->request->data);
@@ -172,7 +196,7 @@
             App::uses('CakeTime', 'Utility');
 
             $authId = $this->Auth->user('User.id');
-            $id = isset($this->request->query['id']) ? $this->request->query['id'] : $id;
+            $id = isset($this->request->query['id']) ? $this->request->query['id'] : 0;
             $search = isset($this->request->query['search']) ? $this->request->query['search'] : '';
 
             $conditions = array(

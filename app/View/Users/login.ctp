@@ -1,15 +1,15 @@
 <style>
-    .card {
-        display: -ms-flexbox;
-        display: flex;
-        -ms-flex-align: center;
-        align-items: center;
-        padding-top: 40px;
-        padding-bottom: 40px;
-        background-color: #f5f5f5;
-        text-align:center;
-        justify-content:center;
-    }
+.card {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #f5f5f5;
+    text-align: center;
+    justify-content: center;
+}
 </style>
 <div class="login-wrapper m-auto">
     <div class="card">
@@ -27,37 +27,36 @@
     </div>
 </div>
 <script>
-    $(document).ready(function(){
-        $('#UserLoginForm').on('submit', function(e){
-            e.preventDefault();
-            if (!$(this).find('input#UserEmail').val() || !$(this).find('input#UserPassword').val()) {
-                toastr["error"]("All Fields are required");
-                return false;
-            }
-            var form = $(this);
+$(document).ready(function() {
+    $('#UserLoginForm').on('submit', function(e) {
+        e.preventDefault();
+        if (!$(this).find('input#UserEmail').val() || !$(this).find('input#UserPassword').val()) {
+            toastr["error"]("All Fields are required");
+            return false;
+        }
+        var form = $(this);
 
-            $.ajax({
-                type: 'POST',
-                data: form.serialize(),
-                dataType:'json',
-                success: function(response) {
-                    if (response.status === "success") { 
-                        toastr["success"](response.message);
-                        form.trigger("reset");
-                        setTimeout(() => {
-                            window.location.href = '<?php echo $this->Html->url(array("controller" => "users", "action" => "index")) ?>';
-                        }, 1000);
-                    } else {
-                        toastr["error"](response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                    toastr["error"]("Something went wrong! ");
+        $.ajax({
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === "success") {
+                    toastr["success"](response.message);
+                    form.trigger("reset");
+                    setTimeout(() => {
+                        window.location.href =
+                            '<?php echo $this->Html->url(array("controller" => "users", "action" => "index")) ?>';
+                    }, 1000);
+                } else {
+                    toastr["error"](response.message);
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+                toastr["error"]("Something went wrong! ");
+            }
         });
     });
-
-        
+});
 </script>
