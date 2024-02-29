@@ -122,10 +122,6 @@
                 'userData'=> $userDetailsData,
                 'profilePicture' => $profilePicture
             ));
-            //if user not found redirect to homepage
-            if (!$userDetailsData) {
-                $this->redirect(array('controller' => 'users', 'action' => 'index'));
-            }
             //check ajax request
             if ($this->request->is('ajax')) {
                 //disable default layout in view
@@ -133,10 +129,11 @@
                 //insert data id 
                 $this->request->data['UserDetail']['id'] = $userDetailsData['UserDetail']['id'];
                 //set data form the table user_details
-                $this->UserDetail->set($this->request->data['UserDetail']);
+                
                 $this->User->set($this->request->data);
                 //iniatialize profile picture
                 $file = $this->request->data['UserDetail']['profile'];
+                
                 //if profile picture is empty unset so that it not be inluded to the validation in the model
                 if (!$file['name']) {
                      unset($this->request->data['UserDetail']['profile']);
@@ -158,6 +155,7 @@
                 if ($this->request->data['User']['password']) {
                     $this->User->saveField('password', $this->request->data['User']['password']); // Update the password field
                 }
+                //$this->UserDetail->set($this->request->data['UserDetail']);
                 if ($this->UserDetail->validateMany($this->request->data) ) {
                     //if has profile picture
                     if ($file['name']) {
@@ -166,15 +164,16 @@
                         $fileFullPath = $uploadPath . $filename;
                         //move image to upload directory
                         if (move_uploaded_file($file['tmp_name'], $fileFullPath)) {
-                            $this->request->data['UserDetail']['profile'] = $filename;
+                            $this->request->data['UserDetail']['UserDetail']['profile'] = $filename;
                         } else {
-                            $this->request->data['UserDetail']['profile'] = $userDetailsData['UserDetail']['profile'];
+                            $this->request->data['UserDetail']['UserDetail']['profile'] = $userDetailsData['UserDetail']['profile'];
                         }
+                        
                     }
+                    
                     //format date
                     $bdate = date_format(date_create($requestBirthDate),  'Y/m/d');
                     $this->request->data['UserDetail']['birthdate'] = $bdate;
-                    
                     //Save userdetail
                     if ($this->User->UserDetail->save($this->request->data['UserDetail'])) {
                         //refresh auth

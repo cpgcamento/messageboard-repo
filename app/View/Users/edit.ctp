@@ -1,14 +1,3 @@
-<?php if (isset($errors) && !empty($errors)): ?>
-<div class="error-message">
-    <ul>
-        <?php foreach ($errors as $field => $error): ?>
-        <?php foreach ($error as $msg): ?>
-        <li><?php echo $msg ?></li>
-        <?php endforeach; ?>
-        <?php endforeach; ?>
-    </ul>
-</div>
-<?php endif; ?>
 <div class="card profile-info">
     <div class="card-header">
         <div class="h3 card-title">User Profile - EDIT</div>
