@@ -258,7 +258,7 @@
                 $htmlData .='<img src="'.Router::url('/upload/'.$profilePic).'" alt="profile">';
                 $htmlData .='<div><div class="messages">';
                 $htmlData .='<p class="name">'.$message['Sender']['name'].'</p>';
-                $htmlData .='<p class="details">'.$message['Message']['content'].'</p>';
+                $htmlData .='<p class="details" data-message="'.$message['Message']['content'].'">'.CakeText::excerpt($message['Message']['content'], 'method', 100, '<span class="elipsis">...</span>').'</p>';
                 $htmlData .='</div> <p class="time">Sent: '.CakeTime::niceShort($message['Message']['created_at']).'</p></div>';
                 $htmlData .='</div> </div>';
             }

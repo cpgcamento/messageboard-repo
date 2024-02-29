@@ -47,6 +47,10 @@ $(document).ready(function() {
         });
     });
 
+    $(document).on('click', 'span.elipsis', function() {
+        $(this).parent().text($(this).parent().attr('data-message'));
+    });
+
     setTimeout(function() {
         totalMessage.push($('.messages-wrapper .data').attr('data-total'));
         setInterval(() => {
