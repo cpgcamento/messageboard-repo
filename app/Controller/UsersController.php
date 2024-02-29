@@ -108,6 +108,7 @@
         public function edit() {
             //iniatialize auth id
             $authId = $this->Auth->user('User.id');
+            //retrieve user data
             //retrive user detail data 
             $userDetailsData = $this->User->UserDetail->findByUserId($authId);
             //add a default avatar to all empty
@@ -132,7 +133,8 @@
                 //insert data id 
                 $this->request->data['UserDetail']['id'] = $userDetailsData['UserDetail']['id'];
                 //set data form the table user_details
-                $this->UserDetail->set($this->request->data);
+                $this->UserDetail->set($this->request->data['UserDetail']);
+                $this->User->set($this->request->data);
                 //iniatialize profile picture
                 $file = $this->request->data['UserDetail']['profile'];
                 //if profile picture is empty unset so that it not be inluded to the validation in the model
@@ -141,8 +143,22 @@
                 }
                 //initialise birthdate
                 $requestBirthDate = $this->request->data['UserDetail']['birthdate'];
-                //validate userdetails
-                if ($this->UserDetail->validateMany($this->request->data)) {
+                //validate userdetails  
+                $this->User->id = $authId;
+                if ($this->User->email != $this->request->data['User']['email']) {
+                    if($this->User->validates(array('fieldList' => array('email')))) {
+                        // Update email in the users table
+                        $this->User->saveField('email', $this->request->data['User']['email']); // Update the email field
+                    
+                    } else {
+                        echo json_encode(array('status' => 'error', 'message' => 'Validation failed', 'validationError' => $this->User->validationErrors));
+                        return false;
+                    }
+                }
+                if ($this->request->data['User']['password']) {
+                    $this->User->saveField('password', $this->request->data['User']['password']); // Update the password field
+                }
+                if ($this->UserDetail->validateMany($this->request->data) ) {
                     //if has profile picture
                     if ($file['name']) {
                         $filename = uniqid().$file['name'];
@@ -158,18 +174,22 @@
                     //format date
                     $bdate = date_format(date_create($requestBirthDate),  'Y/m/d');
                     $this->request->data['UserDetail']['birthdate'] = $bdate;
+                    
                     //Save userdetail
-                    if ($this->User->UserDetail->save($this->request->data)) {
+                    if ($this->User->UserDetail->save($this->request->data['UserDetail'])) {
                         //refresh auth
                         $this->Auth->login($this->User->findById($authId));
                         echo json_encode(array('status' => 'success', 'message' => 'Updated Successfully!'));
                     } else {
                         echo json_encode(array('status' => 'error', 'message' => 'Error in updating users details!'));
                     }
+                    
+                    //
                 } else {
                     //alidation errors
                     $validationErrors = $this->UserDetail->validationErrors;
-                    echo json_encode(array('status' => 'error', 'message' => 'Validation failed', 'validationErrors' => $validationErrors));
+                    echo json_encode(array('status' => 'errors', 'message' => 'Validation failed', 'validationErrors' => $validationErrors));
+                    
                 }
                 
             } else {

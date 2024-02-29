@@ -21,12 +21,13 @@ App::uses('Controller', 'Controller/Users');
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
-	<?php echo $this->Html->charset(); ?>
-	<title>
-		MessageBoard
-	</title>
-	<?php
+    <?php echo $this->Html->charset(); ?>
+    <title>
+        MessageBoard
+    </title>
+    <?php
 		echo $this->Html->meta('icon');
 
 		echo $this->Html->css(array('app','bootstrap.min','toastr.min','jquery-ui','select2.min'));
@@ -37,30 +38,39 @@ App::uses('Controller', 'Controller/Users');
 		echo $this->fetch('script');
 	?>
 </head>
-<body>
-	<div class="container-fluid">
-		<?php if ($this->Session->check('Auth.User')): ?>
-		<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-			<div class="collapse navbar-collapse">
-				<a class="navbar-brand" href="<?php echo $this->Html->url(array('controller'=>'users','action' => 'index')) ?>">Message Board</a>
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-			</div>
-			<div class="navbar-nav text-right">
-					<a class="nav-link" href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'index')) ?>">Home <span class="sr-only">(current)</span></a>
-					<a class="nav-link" href="<?php echo $this->Html->url(array('controller' => 'messages', 'action' => 'index')) ?>">Messages</a>
-					<a class="nav-link" href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'logout')) ?>">Logout</a>
-				</div>
-		</nav>
-		<?php endif; ?>
-		<div class="card">
-			<div class="card-body">
-				<?php echo $this->Flash->render(); ?>
 
-			<?php echo $this->fetch('content'); ?>
-			</div>
-		</div>
-	</div>
+<body>
+    <div class="container-fluid">
+        <?php if ($this->Session->check('Auth.User')): ?>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+            <div class="collapse navbar-collapse">
+                <a class="navbar-brand"
+                    href="<?php echo $this->Html->url(array('controller'=>'users','action' => 'index')) ?>">Message
+                    Board</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+                    aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            <div class="navbar-nav text-right">
+                <a class="nav-link"
+                    href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'index')) ?>">Home
+                    <span class="sr-only">(current)</span></a>
+                <a class="nav-link"
+                    href="<?php echo $this->Html->url(array('controller' => 'messages', 'action' => 'index')) ?>">Messages</a>
+                <a class="nav-link"
+                    href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'logout')) ?>">Logout</a>
+            </div>
+        </nav>
+        <?php endif; ?>
+        <div class="card">
+            <div class="card-body">
+                <?php echo $this->Flash->render(); ?>
+
+                <?php echo $this->fetch('content'); ?>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

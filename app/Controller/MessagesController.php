@@ -59,7 +59,7 @@
                  */
                 $page = isset($this->request->query['page']) ? $this->request->query['page'] : 1;
                 $keyword = isset($this->request->query['keywords']) ? $this->request->query['keywords'] : "";
-                $limit = isset($this->request->query['limit']) ? $this->request->query['limit'] : 10;
+                $limit = isset($this->request->query['limit']) ? $this->request->query['limit'] : 2;
                 $offset = ($page - 1) * $limit;
                 $messages = [];
                 $totalMessages = 0;
@@ -180,10 +180,14 @@
                 $this->request->data['Message']['from_user_id'] = $this->Auth->user('User.id');
                 $this->request->data['Message']['to_user_id'] = $id;
                 $this->Message->set($this->request->data);
-                $this->Message->save($this->request->data);
-                
+                if ($this->request->data['Message']['content']!="") {
+                     $this->Message->save($this->request->data);
+                    $this->response->body(json_encode(['success' => 'Data saved successfully!']));
+                } else {
+                    $this->response->body(json_encode(['error' => 'Cannot send empty message']));
+                }
+               
                 $this->response->type('json');
-                $this->response->body(json_encode(['success' => 'Data saved successfully!']));
                 return $this->response;
             }
             $this->set(array(
@@ -196,8 +200,12 @@
             App::uses('CakeTime', 'Utility');
 
             $authId = $this->Auth->user('User.id');
+            $page = isset($this->request->query['page']) ? $this->request->query['page'] : 1;
             $id = isset($this->request->query['id']) ? $this->request->query['id'] : 0;
             $search = isset($this->request->query['search']) ? $this->request->query['search'] : '';
+            $limit = isset($this->request->query['limit']) ? $this->request->query['limit'] : 10;
+            $offset = ($page - 1) * $limit;
+            $messageCount = isset($this->request->query['count']) ? $this->request->query['count'] : '';
 
             $conditions = array(
                 'OR' => array(
@@ -215,11 +223,30 @@
 
             $messages = $this->Message->find('all', array(
                 'conditions' => $conditions,
+                'limit' => $limit,
+                'offset' => $offset,
+                'order' => array('Message.created_at DESC'),
             ));
 
-            $htmlData = '<div class="data">';
+            if (!$messages && !$search) {
+                 $this->response->type('json');
+                $this->response->body(json_encode(['error' => 'Conversation not found']));
+                return $this->response;
+            }
 
-            foreach ($messages as $message) {
+            $totalMessages = $this->Message->find('count', array(
+                'conditions' => $conditions,
+                'order' => array('Message.created_at DESC'),
+            ));
+
+            $totalPages = ceil($totalMessages / $limit);
+
+            $htmlData = '<div class="data" data-total="'.$totalMessages.'">';
+            if ($totalPages != $page) {
+                $htmlData .='<p id="msg-details-showmore" data-current="'.$page.'">UP ↑</p>';
+            }
+            
+            foreach (array_reverse($messages) as $message) {
                 $profilePic = $message['Sender']['profile'] ?? 'avatar.jpg';
                 if ($message['Sender']['user_id'] === $authId) {
                     $msgClasses = 'my-message';
@@ -235,10 +262,52 @@
                 $htmlData .='</div> <p class="time">Sent: '.CakeTime::niceShort($message['Message']['created_at']).'</p></div>';
                 $htmlData .='</div> </div>';
             }
+            if ($page!= 1) {
+                $htmlData .='<p id="msg-details-back" data-current="'.$page.'">DOWN ↓</p>';
+            }
             $htmlData .='</div>';
+            $this->response->type('json');
+            if ($messageCount!=""){
+                $this->response->body(json_encode(['total' => $totalMessages]));
+            } else {
+                $this->response->body(json_encode(['html' => $htmlData]));
+            }
+            
+            return $this->response;
+        }
+
+        public function countUserMessage() {
+            App::uses('CakeTime', 'Utility');
+
+            $authId = $this->Auth->user('User.id');
+            $id = isset($this->request->query['id']) ? $this->request->query['id'] : 0;
+
+            $conditions = array(
+                'OR' => array(
+                    array(
+                        'Message.from_user_id' => $authId,
+                        'Message.to_user_id' => $id,
+                    ),
+                    array(
+                        'Message.from_user_id' => $id,
+                        'Message.to_user_id' => $authId,
+                    )
+                ),
+            );
+
+            $messages = $this->Message->find('all', array(
+                'conditions' => $conditions,
+                'order' => array('Message.created_at DESC'),
+            ));
+
+            $totalMessages = $this->Message->find('count', array(
+                'conditions' => $conditions,
+                'order' => array('Message.created_at DESC'),
+            ));
 
             $this->response->type('json');
-            $this->response->body(json_encode(['html' => $htmlData]));
+            $this->response->body(json_encode(['total' => $totalMessages]));
+            
             return $this->response;
         }
         
